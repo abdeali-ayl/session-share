@@ -464,6 +464,14 @@ body{
 
 /* hr subtle */
 hr.subtle{border:none;border-top:1px solid var(--divider);margin:1rem 0;}
+
+/* Accessibility */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms!important;animation-delay:0ms!important;transition-duration:0.01ms!important;}
+  .msg-row{opacity:1!important;transform:none!important;}
+  .sidebar-inner{opacity:1!important;transform:none!important;}
+  .flow-nav-area,.summary-section,.summary-table{opacity:1!important;transform:none!important;}
+}
 </style>
 </head>
 <body>
