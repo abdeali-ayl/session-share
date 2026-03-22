@@ -466,6 +466,16 @@ body{
 /* hr subtle */
 hr.subtle{border:none;border-top:1px solid var(--divider);margin:1rem 0;}
 
+/* Focus visible ring */
+:focus-visible{
+  outline:2px solid var(--blue-prism);
+  outline-offset:2px;
+  border-radius:3px;
+}
+.toc-item:focus-visible,.flow-nav-item:focus-visible{
+  outline-color:rgba(255,255,255,0.7);
+}
+
 /* Accessibility */
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:0.01ms!important;animation-delay:0ms!important;transition-duration:0.01ms!important;}
