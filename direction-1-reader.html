@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction 1 — The Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue-deep: #1b2e4a;
+  --blue-mid: #4a6fa5;
+  --blue-prism: #5b8fd9;
+  --blue-wash: #e4edf8;
+  --blue-ghost: #f0f4fa;
+  --surface: #fafbfe;
+  --text-primary: #1e2d42;
+  --text-secondary: #5a6a80;
+  --text-muted: #8a97a8;
+  --divider: #dfe4ed;
+  --phase-ideation: #8b5cf6;
+  --phase-review: #2563eb;
+  --phase-setup: #6366f1;
+  --phase-context: #64748b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--surface); color: var(--text-primary); font-size: 17px; line-height: 1.8; }
+
+/* Progress bar */
+#progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--blue-prism); width: 0%; z-index: 100; transition: width 0.1s; }
+
+/* Layout */
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--divider);
+  padding: 2rem 1.2rem;
+  background: #fff;
+}
+.sidebar-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 1.2rem; }
+.toc-item {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.45rem 0.6rem; border-radius: 6px; margin-bottom: 0.2rem;
+  cursor: pointer; text-decoration: none;
+  font-family: 'Crimson Pro', serif; font-size: 0.88rem; color: var(--text-secondary);
+  transition: all 0.15s; border-left: 2px solid transparent;
+}
+.toc-item:hover { background: var(--blue-ghost); color: var(--text-primary); }
+.toc-item.active { background: var(--blue-wash); color: var(--blue-mid); border-left-color: var(--blue-prism); font-weight: 600; }
+.toc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.toc-item[data-phase="context"] .toc-dot    { background: var(--phase-context); }
+.toc-item[data-phase="review"] .toc-dot     { background: var(--phase-review); }
+.toc-item[data-phase="ideation"] .toc-dot   { background: var(--phase-ideation); }
+.toc-item[data-phase="setup"] .toc-dot      { background: var(--phase-setup); }
+
+.sidebar-divider { border: none; border-top: 1px solid var(--divider); margin: 1.2rem 0; }
+
+.current-phase-pill {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.6rem; letter-spacing: 0.12em;
+  padding: 0.2rem 0.55rem; border-radius: 100px; border: 1px solid; display: inline-block;
+  margin-bottom: 1rem;
+}
+.current-phase-pill[data-phase="context"]  { color: var(--phase-context); border-color: var(--phase-context); background: #f8fafc; }
+.current-phase-pill[data-phase="review"]   { color: var(--phase-review); border-color: var(--phase-review); background: #eff6ff; }
+.current-phase-pill[data-phase="ideation"] { color: var(--phase-ideation); border-color: var(--phase-ideation); background: #f5f3ff; }
+.current-phase-pill[data-phase="setup"]    { color: var(--phase-setup); border-color: var(--phase-setup); background: #eef2ff; }
+
+/* Main */
+.main { padding: 0; }
+
+.page-header {
+  padding: 3rem 3rem 2.5rem;
+  border-bottom: 1px solid var(--divider);
+}
+.page-header h1 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 3.2rem;
+  color: var(--blue-deep); line-height: 1.05; letter-spacing: 0.04em;
+}
+.page-header .date { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--blue-prism); letter-spacing: 0.15em; margin-top: 0.3rem; }
+.page-header .desc { font-size: 1rem; color: var(--text-secondary); font-style: italic; max-width: 560px; margin-top: 1rem; font-weight: 300; }
+.meta-row { display: flex; gap: 1.5rem; margin-top: 1.2rem; }
+.meta-item { font-family: 'Bebas Neue', sans-serif; font-size: 0.7rem; letter-spacing: 0.12em; color: var(--text-muted); }
+.meta-item span { color: var(--blue-mid); }
+
+/* Section + Messages */
+.section-header {
+  padding: 2.5rem 3rem 1rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.section-num { font-family: 'Bebas Neue', sans-serif; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.12em; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--blue-mid); letter-spacing: 0.2em; }
+.section-phase { font-family: 'Bebas Neue', sans-serif; font-size: 0.6rem; letter-spacing: 0.12em; padding: 0.15rem 0.5rem; border-radius: 100px; border: 1px solid; }
+.section-phase[data-phase="context"]  { color: var(--phase-context); border-color: var(--phase-context); background: #f8fafc; }
+.section-phase[data-phase="review"]   { color: var(--phase-review); border-color: var(--phase-review); background: #eff6ff; }
+.section-phase[data-phase="ideation"] { color: var(--phase-ideation); border-color: var(--phase-ideation); background: #f5f3ff; }
+.section-phase[data-phase="setup"]    { color: var(--phase-setup); border-color: var(--phase-setup); background: #eef2ff; }
+
+/* Full-width message rows */
+.message-row {
+  display: grid; grid-template-columns: 80px 1fr;
+  padding: 0.8rem 3rem 0.8rem 0;
+  border-bottom: 1px solid var(--divider);
+  transition: background 0.1s;
+}
+.message-row:hover { background: var(--blue-ghost); }
+.message-row.ab-row { background: #fdfeff; }
+.message-row.claude-row { background: #fff; }
+
+.speaker-col {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding-right: 1.2rem; padding-top: 0.15rem; gap: 0.35rem;
+}
+.speaker-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; letter-spacing: 0.04em;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ab-row .speaker-avatar { background: var(--blue-prism); color: #fff; }
+.claude-row .speaker-avatar { background: var(--divider); color: var(--text-secondary); }
+.phase-tag {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.5rem; letter-spacing: 0.1em;
+  padding: 0.1rem 0.3rem; border-radius: 3px; text-align: center;
+  white-space: nowrap;
+}
+.phase-tag[data-phase="context"]  { color: var(--phase-context); background: #f8fafc; }
+.phase-tag[data-phase="review"]   { color: var(--phase-review); background: #eff6ff; }
+.phase-tag[data-phase="ideation"] { color: var(--phase-ideation); background: #f5f3ff; }
+.phase-tag[data-phase="setup"]    { color: var(--phase-setup); background: #eef2ff; }
+
+.content-col { padding-top: 0.1rem; padding-right: 1rem; }
+.content-col p { margin-bottom: 0.7rem; font-size: 0.97rem; color: var(--text-secondary); line-height: 1.75; }
+.content-col p:last-child { margin-bottom: 0; }
+.content-col strong { color: var(--text-primary); font-weight: 600; }
+.content-col code { font-family: monospace; font-size: 0.85rem; background: var(--blue-ghost); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--blue-mid); }
+
+.label-row {
+  padding: 0.4rem 3rem 0 80px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; letter-spacing: 0.15em;
+  color: var(--text-muted); margin-bottom: 0.1rem;
+}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-label">NOW READING</div>
+  <div id="current-phase" class="current-phase-pill" data-phase="context">CONTEXT</div>
+  <hr class="sidebar-divider">
+  <div class="sidebar-label">SECTIONS</div>
+  <a href="#s1" class="toc-item active" data-phase="context"><span class="toc-dot"></span>The Brief</a>
+  <a href="#s2" class="toc-item" data-phase="review"><span class="toc-dot"></span>Exploration</a>
+  <a href="#s3" class="toc-item" data-phase="ideation"><span class="toc-dot"></span>The Questions</a>
+  <a href="#s4" class="toc-item" data-phase="setup"><span class="toc-dot"></span>Execution Begins</a>
+  <a href="#s5" class="toc-item" data-phase="review"><span class="toc-dot"></span>Bug Hunt: Jul-25</a>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-header">
+    <h1>A Conversation<br>with Claude</h1>
+    <div class="date">22 MARCH 2026</div>
+    <p class="desc">Building a consolidated revenue sheet from 11 messy monthly files — exploration, planning, and four rounds of debugging.</p>
+    <div class="meta-row">
+      <div class="meta-item">SECTIONS <span>11</span></div>
+      <div class="meta-item">READING TIME <span>~18 min</span></div>
+      <div class="meta-item">MESSAGES <span>32</span></div>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div id="s1" class="section-header" data-section data-phase="context">
+    <span class="section-num">01</span>
+    <span class="section-title">THE BRIEF</span>
+    <span class="section-phase" data-phase="context">CONTEXT</span>
+  </div>
+  <div class="label-row">ABDEALI</div>
+  <div class="message-row ab-row">
+    <div class="speaker-col">
+      <div class="speaker-avatar">AB</div>
+      <span class="phase-tag" data-phase="context">CONTEXT</span>
+    </div>
+    <div class="content-col">
+      <p>This file contains details of the revenue calculation every month. We have a dump of order transactions data that gets condensed into brand-locations, total GMV, and our monthly commission structure is typically a minimum guarantee or a revenue share, whichever is higher at a brand-location level.</p>
+      <p><strong>That total at the bottom is a very important number</strong> — that's what we test against to see whether our data capture is correct or not. Remember that this is financial data, so accuracy is of utmost importance.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div id="s2" class="section-header" data-section data-phase="review">
+    <span class="section-num">02</span>
+    <span class="section-title">EXPLORATION</span>
+    <span class="section-phase" data-phase="review">REVIEW & ITERATE</span>
+  </div>
+  <div class="label-row">CLAUDE</div>
+  <div class="message-row claude-row">
+    <div class="speaker-col">
+      <div class="speaker-avatar">C</div>
+      <span class="phase-tag" data-phase="review">REVIEW</span>
+    </div>
+    <div class="content-col">
+      <p>Here's what I found from exploring the Drive folder: <strong>11 monthly Google Sheets (Apr'25–Feb'26)</strong>, but the summary tab naming and columns vary significantly. Aug'25 uses <code>Summary</code> with full Model|Brand|Location|GMV|Commission. Jan'26 uses <code>Pivot</code> with no Commission column. Feb'26 uses <code>Brandwise sales</code> with no Location.</p>
+      <p>There's also an existing consolidated sheet with monthly roll-ups — but no brand-level rows.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div id="s3" class="section-header" data-section data-phase="ideation">
+    <span class="section-num">03</span>
+    <span class="section-title">THE QUESTIONS</span>
+    <span class="section-phase" data-phase="ideation">IDEATION</span>
+  </div>
+  <div class="label-row">ABDEALI</div>
+  <div class="message-row ab-row">
+    <div class="speaker-col">
+      <div class="speaker-avatar">AB</div>
+      <span class="phase-tag" data-phase="ideation">IDEATION</span>
+    </div>
+    <div class="content-col">
+      <p><strong>Every month pretty surely has a commissions column.</strong> I think the issue is you not finding the correct one, and you're saying that it's missing. Rethink and re-evaluate wherever you want to flag, and then come back to me with a confirmation.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div id="s4" class="section-header" data-section data-phase="setup">
+    <span class="section-num">04</span>
+    <span class="section-title">EXECUTION BEGINS</span>
+    <span class="section-phase" data-phase="setup">SETUP</span>
+  </div>
+  <div class="label-row">CLAUDE</div>
+  <div class="message-row claude-row">
+    <div class="speaker-col">
+      <div class="speaker-avatar">C</div>
+      <span class="phase-tag" data-phase="setup">SETUP</span>
+    </div>
+    <div class="content-col">
+      <p>Sheet created: <code>1KnMdQKtfIuCCtpS0qVoGym-umkraVe6IeJWqBgFFvY0</code>. Aug-25 PASS — 224 rows, GMV=67,598,767, Commission=9,692,665. Now processing Jun through Feb.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div id="s5" class="section-header" data-section data-phase="review">
+    <span class="section-num">05</span>
+    <span class="section-title">BUG HUNT: JUL-25</span>
+    <span class="section-phase" data-phase="review">REVIEW & ITERATE</span>
+  </div>
+  <div class="label-row">CLAUDE</div>
+  <div class="message-row claude-row">
+    <div class="speaker-col">
+      <div class="speaker-avatar">C</div>
+      <span class="phase-tag" data-phase="review">REVIEW</span>
+    </div>
+    <div class="content-col">
+      <p><strong>Root cause found.</strong> Jul-25 Grand Total row has <code>"Grand Total"</code> as brand text — not blank. My detector checked for blank fields only. The detector missed it entirely, causing both halves of the sheet to be counted. GMV loaded as 98M vs expected 49M.</p>
+      <p>Fix: add <code>is_total_label()</code> check — stop processing when brand matches "Grand Total", "Total", etc.</p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+});
+
+// Active TOC via IntersectionObserver
+const sections = document.querySelectorAll('[data-section]');
+const tocItems = document.querySelectorAll('.toc-item');
+const currentPhase = document.getElementById('current-phase');
+const phaseMap = { context: 'CONTEXT', review: 'REVIEW', ideation: 'IDEATION', setup: 'SETUP' };
+
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      const phase = e.target.dataset.phase;
+      tocItems.forEach(t => t.classList.toggle('active', t.getAttribute('href') === '#' + id));
+      if (phase) {
+        currentPhase.dataset.phase = phase;
+        currentPhase.textContent = phaseMap[phase] || phase;
+      }
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

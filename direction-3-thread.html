@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction 3 — The Thread</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue-deep: #1b2e4a;
+  --blue-mid: #4a6fa5;
+  --blue-prism: #5b8fd9;
+  --blue-wash: #e4edf8;
+  --blue-ghost: #f0f4fa;
+  --surface: #fafbfe;
+  --text-primary: #1e2d42;
+  --text-secondary: #5a6a80;
+  --text-muted: #8a97a8;
+  --divider: #dfe4ed;
+  --phase-ideation: #8b5cf6;
+  --phase-review: #2563eb;
+  --phase-setup: #6366f1;
+  --phase-context: #64748b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: #f7f8fb; color: var(--text-primary); font-size: 16px; line-height: 1.7; }
+
+/* Top bar — always visible */
+.top-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--blue-deep); color: #fff;
+  padding: 0.65rem 2rem;
+  display: flex; align-items: center; gap: 1.2rem;
+}
+.top-bar-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.1em; }
+.top-bar-date { font-family: 'Crimson Pro', serif; font-size: 0.82rem; color: #93b4d8; font-style: italic; }
+.top-bar-progress {
+  margin-left: auto; display: flex; align-items: center; gap: 0.6rem;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; letter-spacing: 0.1em; color: #93b4d8;
+}
+.progress-track { width: 80px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+.progress-fill { height: 100%; background: var(--blue-prism); border-radius: 2px; width: 0%; transition: width 0.1s; }
+
+/* Main layout */
+.container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+/* Page title */
+.page-title { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--divider); }
+.page-title h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; color: var(--blue-deep); letter-spacing: 0.04em; line-height: 1.1; }
+.page-title .meta { font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+
+/* Section milestone */
+.milestone {
+  display: flex; align-items: center; gap: 0; margin: 2rem 0 0;
+}
+.milestone-node {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.7rem; color: #fff;
+}
+.milestone[data-phase="context"] .milestone-node  { background: var(--phase-context); }
+.milestone[data-phase="review"] .milestone-node   { background: var(--phase-review); }
+.milestone[data-phase="ideation"] .milestone-node { background: var(--phase-ideation); }
+.milestone[data-phase="setup"] .milestone-node    { background: var(--phase-setup); }
+
+.milestone-line { flex: 1; height: 1px; background: var(--divider); }
+.milestone-label { padding-left: 0.75rem; }
+.milestone-name { font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; letter-spacing: 0.18em; color: var(--blue-mid); }
+.milestone-phase { font-family: 'Bebas Neue', sans-serif; font-size: 0.55rem; letter-spacing: 0.12em; color: var(--text-muted); margin-top: 0.1rem; }
+
+/* Thread entries */
+.thread { margin-top: 0.75rem; background: #fff; border: 1px solid var(--divider); border-radius: 10px; overflow: hidden; }
+
+.entry {
+  display: grid; grid-template-columns: 52px 1fr;
+  border-bottom: 1px solid var(--divider);
+}
+.entry:last-child { border-bottom: none; }
+.entry:hover { background: var(--blue-ghost); }
+
+/* Left gutter */
+.entry-gutter {
+  padding: 0.9rem 0 0.9rem 1rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  border-right: 1px solid var(--divider);
+}
+.entry-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.6rem; letter-spacing: 0.03em;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.entry.ab .entry-avatar  { background: var(--blue-prism); color: #fff; }
+.entry.claude .entry-avatar { background: var(--divider); color: var(--text-secondary); }
+.entry-phase-dot { width: 6px; height: 6px; border-radius: 50%; }
+.entry[data-phase="context"] .entry-phase-dot  { background: var(--phase-context); }
+.entry[data-phase="review"] .entry-phase-dot   { background: var(--phase-review); }
+.entry[data-phase="ideation"] .entry-phase-dot { background: var(--phase-ideation); }
+.entry[data-phase="setup"] .entry-phase-dot    { background: var(--phase-setup); }
+
+/* Right content */
+.entry-body { padding: 0.9rem 1rem; }
+.entry-speaker {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; letter-spacing: 0.15em;
+  color: var(--text-muted); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.6rem;
+}
+.entry.ab .entry-speaker { color: var(--blue-prism); }
+.entry-phase-tag {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.5rem; letter-spacing: 0.1em;
+  padding: 0.08rem 0.35rem; border-radius: 3px;
+}
+.entry[data-phase="context"] .entry-phase-tag  { color: var(--phase-context); background: #f8fafc; }
+.entry[data-phase="review"] .entry-phase-tag   { color: var(--phase-review); background: #eff6ff; }
+.entry[data-phase="ideation"] .entry-phase-tag { color: var(--phase-ideation); background: #f5f3ff; }
+.entry[data-phase="setup"] .entry-phase-tag    { color: var(--phase-setup); background: #eef2ff; }
+
+.entry-text { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.72; }
+.entry-text p { margin-bottom: 0.6rem; }
+.entry-text p:last-child { margin-bottom: 0; }
+.entry-text strong { color: var(--text-primary); font-weight: 600; }
+.entry-text code { font-family: monospace; font-size: 0.82rem; background: var(--blue-ghost); padding: 0.1rem 0.3rem; border-radius: 3px; color: var(--blue-mid); }
+
+/* Expandable long entries */
+.entry-clip { max-height: 80px; overflow: hidden; position: relative; }
+.entry-clip.open { max-height: none; }
+.entry-clip:not(.open)::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
+  background: linear-gradient(transparent, #fff);
+  pointer-events: none;
+}
+.entry:hover .entry-clip:not(.open)::after { background: linear-gradient(transparent, var(--blue-ghost)); }
+.expand-btn {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.62rem; letter-spacing: 0.1em;
+  color: var(--blue-prism); cursor: pointer; margin-top: 0.3rem;
+  background: none; border: none; padding: 0; display: block;
+}
+.expand-btn:hover { opacity: 0.7; }
+
+/* Tool indicator */
+.tools-indicator {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.55rem; letter-spacing: 0.1em;
+  color: var(--text-muted); background: var(--blue-ghost); padding: 0.15rem 0.5rem;
+  border-radius: 3px; display: inline-block; margin-bottom: 0.4rem;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="top-bar-title">Eleven Months, One Sheet</span>
+  <span class="top-bar-date">22 March 2026</span>
+  <div class="top-bar-progress">
+    <span id="progress-pct">0%</span>
+    <div class="progress-track"><div class="progress-fill" id="pf"></div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>A Conversation<br>with Claude</h1>
+    <p class="meta">Building a consolidated revenue sheet from 11 messy monthly files — exploration, planning, and four rounds of debugging. 32 messages · 11 sections · ~18 min read</p>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="milestone" data-phase="context">
+    <div class="milestone-node">01</div>
+    <div class="milestone-label">
+      <div class="milestone-name">THE BRIEF</div>
+      <div class="milestone-phase">CONTEXT</div>
+    </div>
+    <div class="milestone-line"></div>
+  </div>
+  <div class="thread">
+    <div class="entry ab" data-phase="context">
+      <div class="entry-gutter">
+        <div class="entry-avatar">AB</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">ABDEALI <span class="entry-phase-tag">CONTEXT</span></div>
+        <div class="entry-text">
+          <div class="entry-clip" id="e1">
+            <p>This file contains details of the revenue calculation every month. We have a dump of order transactions data that gets condensed into brand-locations, total GMV, and our monthly commission structure is typically a minimum guarantee or a revenue share, whichever is higher at a brand-location level.</p>
+            <p><strong>That total at the bottom is a very important number</strong> — that's what we test against to see whether our data capture is correct or not. Remember that this is financial data, so accuracy is of utmost importance.</p>
+          </div>
+          <button class="expand-btn" onclick="openEntry('e1',this)">SHOW MORE ▾</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="milestone" data-phase="review">
+    <div class="milestone-node">02</div>
+    <div class="milestone-label">
+      <div class="milestone-name">EXPLORATION</div>
+      <div class="milestone-phase">REVIEW & ITERATE</div>
+    </div>
+    <div class="milestone-line"></div>
+  </div>
+  <div class="thread">
+    <div class="entry claude" data-phase="review">
+      <div class="entry-gutter">
+        <div class="entry-avatar">C</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">CLAUDE <span class="entry-phase-tag">REVIEW</span></div>
+        <div class="entry-text">
+          <div class="tools-indicator">⚙ ran 18 commands</div>
+          <p>Here's what I found: <strong>11 monthly Google Sheets (Apr'25–Feb'26)</strong>, but the summary tab naming and columns vary significantly. Aug'25 uses <code>Summary</code> with full commission. Jan'26 uses <code>Pivot</code> with no Commission column. Feb'26 uses <code>Brandwise sales</code> with no Location.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="milestone" data-phase="ideation">
+    <div class="milestone-node">03</div>
+    <div class="milestone-label">
+      <div class="milestone-name">THE QUESTIONS</div>
+      <div class="milestone-phase">IDEATION</div>
+    </div>
+    <div class="milestone-line"></div>
+  </div>
+  <div class="thread">
+    <div class="entry ab" data-phase="ideation">
+      <div class="entry-gutter">
+        <div class="entry-avatar">AB</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">ABDEALI <span class="entry-phase-tag">IDEATION</span></div>
+        <div class="entry-text">
+          <p><strong>Every month pretty surely has a commissions column.</strong> I think the issue is you not finding the correct one. Rethink and re-evaluate, then come back to me with a confirmation.</p>
+        </div>
+      </div>
+    </div>
+    <div class="entry claude" data-phase="ideation">
+      <div class="entry-gutter">
+        <div class="entry-avatar">C</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">CLAUDE <span class="entry-phase-tag">IDEATION</span></div>
+        <div class="entry-text">
+          <p>Good feedback — I was looking at the wrong tabs. <strong>The commission column is in <code>Sheet1</code> on every single month.</strong> I was reading the pivot summaries, not the raw data tabs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="milestone" data-phase="setup">
+    <div class="milestone-node">04</div>
+    <div class="milestone-label">
+      <div class="milestone-name">EXECUTION</div>
+      <div class="milestone-phase">SETUP</div>
+    </div>
+    <div class="milestone-line"></div>
+  </div>
+  <div class="thread">
+    <div class="entry claude" data-phase="setup">
+      <div class="entry-gutter">
+        <div class="entry-avatar">C</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">CLAUDE <span class="entry-phase-tag">SETUP</span></div>
+        <div class="entry-text">
+          <div class="tools-indicator">⚙ ran 6 commands · wrote 2 files</div>
+          <p>Sheet created. Aug-25 <strong>PASS</strong> — 224 rows, GMV=67,598,767, Commission=9,692,665. Now processing Jun through Feb…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="milestone" data-phase="review">
+    <div class="milestone-node">05</div>
+    <div class="milestone-label">
+      <div class="milestone-name">BUG HUNT: JUL-25</div>
+      <div class="milestone-phase">REVIEW & ITERATE</div>
+    </div>
+    <div class="milestone-line"></div>
+  </div>
+  <div class="thread">
+    <div class="entry claude" data-phase="review">
+      <div class="entry-gutter">
+        <div class="entry-avatar">C</div>
+        <div class="entry-phase-dot"></div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-speaker">CLAUDE <span class="entry-phase-tag">REVIEW</span></div>
+        <div class="entry-text">
+          <p><strong>Root cause found.</strong> Jul-25 Grand Total row has <code>"Grand Total"</code> as brand text — not blank cells. My detector missed it, counting both halves: GMV loaded as 98M vs expected 49M. Fix: <code>is_total_label()</code> check — stop when brand matches "Grand Total".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function openEntry(id, btn) {
+  document.getElementById(id).classList.add('open');
+  btn.remove();
+}
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = Math.round((h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100);
+  document.getElementById('pf').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+});
+</script>
+</body>
+</html>
